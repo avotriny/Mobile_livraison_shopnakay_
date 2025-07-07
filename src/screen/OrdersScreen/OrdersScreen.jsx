@@ -14,7 +14,7 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OrdersScreen() {
-  const [lines, setLines] = useState([]);       // liste plate des lignes de commande
+  const [lines, setLines] = useState([]);       
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -32,14 +32,12 @@ export default function OrdersScreen() {
         'http://10.0.2.2:8000/api/commande',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      //1️⃣ Récupère la page courante de commandes
       const allOrders = res.data.commandes.data;
 
-      //2️⃣ Aplatit en "lignes" en gardant la commande parente
+
       const allLines = allOrders.flatMap(order =>
         order.lignes.map(line => ({
           ...line,
-          // données de la commande
           orderId:       order.id,
           clientNom:     order.nom,
           clientEmail:   order.email,
@@ -51,7 +49,7 @@ export default function OrdersScreen() {
 
       setLines(allLines);
 
-      //3️⃣ Extraction des catégories uniques
+
       const cats = Array.from(new Set(
         allLines.map(l => l.produit.subcategorie.name_categorie)
       ));
@@ -64,7 +62,7 @@ export default function OrdersScreen() {
     }
   };
 
-  // Filtrage par catégorie
+
   const filtered = selectedCat === 'All'
     ? lines
     : lines.filter(l => l.produit.subcategorie.name_categorie === selectedCat);
@@ -99,7 +97,6 @@ export default function OrdersScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Filtre par catégorie */}
       <View style={styles.filter}>
         <Text style={styles.filterLabel}>Catégorie :</Text>
         <Picker
@@ -113,7 +110,6 @@ export default function OrdersScreen() {
         </Picker>
       </View>
 
-      {/* Liste des lignes de commande */}
       <FlatList
         data={filtered}
         keyExtractor={item => item.id.toString()}

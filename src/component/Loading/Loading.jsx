@@ -6,10 +6,8 @@ import { useValue } from '../../context/ContextProvider';
 const Loading = () => {
   const { state: { loading } } = useValue();
 
-  // 1) Si on n'est pas en train de charger, on ne rend rien
   if (!loading) return null;
 
-  // 2) Sinon on renvoie bien du JSX
   return (
     <SafeAreaView style={styles.container}>
       <ActivityIndicator size="large" />
@@ -19,9 +17,9 @@ const Loading = () => {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject, // plein écran
+    ...StyleSheet.absoluteFillObject, 
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)', // optionnel : overlay
+    backgroundColor: 'rgba(0,0,0,0.3)',
   }
 });
 

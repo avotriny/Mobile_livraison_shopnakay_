@@ -21,11 +21,9 @@ export default function ProductsScreen() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // 1. Fetch produits
         const res = await axios.get('http://10.0.2.2:8000/api/produit');
         const allProds = res.data.produit;
 
-        // 2. Extraire catégories uniques
         const uniqueCats = Array.from(
           new Set(allProds.map(p => p.subcategorie.name_categorie))
         );
@@ -40,13 +38,10 @@ export default function ProductsScreen() {
     }
     fetchData();
   }, []);
-
-  // Filtrer la liste selon selectedCat
   const filtered = selectedCat === 'All'
     ? products
     : products.filter(p => p.subcategorie.name_categorie === selectedCat);
 
-  // Rendu d’un item
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.card}>
       <Image
@@ -72,7 +67,6 @@ export default function ProductsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Filtre par catégorie */}
       <View style={styles.filter}>
         <Text style={styles.filterLabel}>Catégorie :</Text>
         <Picker
@@ -86,13 +80,12 @@ export default function ProductsScreen() {
         </Picker>
       </View>
 
-      {/* Liste des produits */}
       <FlatList
         data={filtered}
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        numColumns={2}                 // deux colonnes pour un rendu grille
+        numColumns={2}                 
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -128,7 +121,7 @@ const styles = StyleSheet.create({
     margin: 6,
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 3, // Android shadow
+    elevation: 3, 
   },
   image: {
     width: '100%',

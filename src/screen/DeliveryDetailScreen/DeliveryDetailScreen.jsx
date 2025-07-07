@@ -1,4 +1,3 @@
-// DeliveryDetailScreen.jsx (Écran de détail)
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -12,7 +11,6 @@ export default function DeliveryDetailScreen() {
 
   return (
     <View style={styles.wrapper}>
-      {/* Header with back arrow */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#333" />

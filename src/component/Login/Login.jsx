@@ -29,10 +29,9 @@ export default function Login() {
     dispatch({ type: 'START_LOADING' });
 
     try {
-      // Remplace par l'URL de ton API
       const API_URL = 'http://10.0.2.2:8000/api'; 
       const payload = {
-        login: values.email,    // côté backend, tu acceptes 'login' (email OU name)
+        login: values.email,   
         password: values.password,
       };
 

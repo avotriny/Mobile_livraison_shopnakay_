@@ -40,7 +40,6 @@ export default function PendingDeliveriesScreen({ navigation }) {
           <Text style={[styles.line, styles.status]}>{item.status}</Text>
         </TouchableOpacity>
 
-        {/* Bouton Faire la livraison */}
         {item.status !== 'livré' && (
           <View style={styles.buttonContainer}>
             <Button

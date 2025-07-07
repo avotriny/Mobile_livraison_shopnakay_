@@ -1,4 +1,3 @@
-// src/component/Notification/Notification.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -23,7 +22,6 @@ export default function Notification() {
   const [visible, setVisible] = useState(false);
   const translateY = useRef(new Animated.Value(-100)).current;
 
-  // Slide-in / slide-out
   useEffect(() => {
     if (alert.open) {
       setVisible(true);
@@ -31,8 +29,7 @@ export default function Notification() {
         toValue: 0,
         useNativeDriver: true
       }).start();
-
-      // auto-close
+      
       const timer = setTimeout(close, 3500);
       return () => clearTimeout(timer);
     }

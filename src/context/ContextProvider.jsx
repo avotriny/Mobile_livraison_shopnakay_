@@ -15,7 +15,6 @@ export const useValue = () => useContext(Context);
 const ContextProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Au démarrage, on récupère currentUser
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -30,7 +29,7 @@ const ContextProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // À chaque changement de currentUser, on le sauvegarde
+
   useEffect(() => {
     const saveUser = async () => {
       try {

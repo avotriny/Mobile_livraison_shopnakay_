@@ -7,7 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Signature from 'react-native-signature-canvas';
 
-// Schéma de validation
 const LivraisonSchema = Yup.object().shape({
   images: Yup.mixed()
     .nullable()
@@ -23,7 +22,6 @@ export default function LivraisonFormScreen({ route, navigation }) {
   const [previewImage, setPreviewImage] = useState(null);
   const sigRef = useRef();
 
-  // Ouvre la librairie d'images
   const pickImage = async (setFieldValue) => {
     try {
       const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -42,13 +40,12 @@ export default function LivraisonFormScreen({ route, navigation }) {
     }
   };
 
-  // Réinitialise la signature
   const resetSignature = (setFieldValue) => {
     sigRef.current?.clearSignature();
     setFieldValue('signature', '');
   };
 
-  // Envoi du formulaire
+
   const submitLivraison = async (values, { setSubmitting }) => {
     const formData = new FormData();
     formData.append('commande_id', String(commande.id));
@@ -91,7 +88,6 @@ export default function LivraisonFormScreen({ route, navigation }) {
       >
         {({ handleSubmit, setFieldValue, setFieldTouched, values, errors, touched, isSubmitting }) => (
           <View>
-            {/* Sélecteur d'image */}
             <View style={styles.imagePicker}>
               {previewImage ? (
                 <Image source={{ uri: previewImage }} style={styles.imagePreview} />
@@ -101,7 +97,7 @@ export default function LivraisonFormScreen({ route, navigation }) {
             </View>
             {errors.images && touched.images && <Text style={styles.error}>{errors.images}</Text>}
 
-            {/* Pad de signature inline */}
+
             <Text style={styles.label}>Signature :</Text>
             <View style={styles.sigWrapper}>
               <Signature
@@ -124,11 +120,9 @@ export default function LivraisonFormScreen({ route, navigation }) {
             </View>
             {errors.signature && touched.signature && <Text style={styles.error}>{errors.signature}</Text>}
 
-            {/* Bouton de soumission */}
             <Button
               title={isSubmitting ? 'Envoi...' : 'Valider la livraison'}
               onPress={() => {
-                // Forcer la lecture de la signature si l'utilisateur n'a pas appuyé "Valider" dans le pad
                 sigRef.current?.readSignature();
                 handleSubmit();
               }}
