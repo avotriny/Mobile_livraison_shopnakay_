@@ -1,23 +1,20 @@
-// MainApp.jsx
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
-import ProductsScreen from '../../screen/ProduitScreen/ProduitScreen';
-import OrdersScreen from '../../screen/OrdersScreen/OrdersScreen';
 import PendingDeliveriesScreen from '../../screen/PendingDeliveriesScreen/PendingDeliveriesScreen';
-import CompletedDeliveriesScreen from '../../screen/CompletedDeliveriesScreen/CompletedDeliveriesScreen';
 import LivraisonFormScreen from '../../screen/LivraisonFormScreen/LivraisonFormScreen';
-import ProfileScreen from '../../screen/ProfileScreen/ProfileScreen';
+import CompletedDeliveriesScreen from '../../screen/CompletedDeliveriesScreen/CompletedDeliveriesScreen';
+import DeliveryDetailScreen from '../../screen/DeliveryDetailScreen/DeliveryDetailScreen';
 import MapScreen from '../../screen/MapScreen/MapScreen';
+import ProfileScreen from '../../screen/ProfileScreen/ProfileScreen';
 import CustomHeader from '../Header/CustomHeader';
+import OrdersScreen from '../../screen/OrdersScreen/OrdersScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Stack for pending deliveries flow
 function DeliveryStack() {
   return (
     <Stack.Navigator screenOptions={{ header: () => <CustomHeader /> }}>
@@ -35,7 +32,6 @@ function DeliveryStack() {
   );
 }
 
-// Stack for completed deliveries (Livrées)
 function CompletedStack() {
   return (
     <Stack.Navigator screenOptions={{ header: () => <CustomHeader /> }}>
@@ -45,8 +41,8 @@ function CompletedStack() {
         options={{ title: 'Livrées' }}
       />
       <Stack.Screen
-        name="LivraisonForm"
-        component={LivraisonFormScreen}
+        name="DeliveryDetail"
+        component={DeliveryDetailScreen}
         options={{ title: 'Détails livraison' }}
       />
     </Stack.Navigator>
@@ -58,11 +54,10 @@ export default function MainApp() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route, navigation }) => ({
-          header: () => <CustomHeader navigation={navigation} />, 
+          header: () => <CustomHeader navigation={navigation} />,
           tabBarIcon: ({ color, size }) => {
             let iconName;
-            if (route.name === 'Produits') iconName = 'cube-outline';
-            else if (route.name === 'Commandes') iconName = 'cart-outline';
+            if (route.name === 'Commandes') iconName = 'cart-outline';
             else if (route.name === 'À faire') iconName = 'truck-delivery-outline';
             else if (route.name === 'Livrées') iconName = 'check-decagram-outline';
             else if (route.name === 'Map') iconName = 'map-outline';
@@ -70,29 +65,14 @@ export default function MainApp() {
           },
           tabBarActiveTintColor: '#228B22',
           tabBarInactiveTintColor: 'gray',
-          tabBarStyle: { paddingHorizontal: 20 },
-          tabBarItemStyle: { marginHorizontal: 15 },
           tabBarShowLabel: false,
         })}
       >
-        <Tab.Screen name="Produits" component={ProductsScreen} />
         <Tab.Screen name="Commandes" component={OrdersScreen} />
-        <Tab.Screen
-          name="À faire"
-          component={DeliveryStack}
-          options={{ headerShown: false }}
-        />
-        <Tab.Screen
-          name="Livrées"
-          component={CompletedStack}
-          options={{ headerShown: false }}
-        />
+        <Tab.Screen name="À faire" component={DeliveryStack} options={{ headerShown: false }} />
+        <Tab.Screen name="Livrées" component={CompletedStack} options={{ headerShown: false }} />
         <Tab.Screen name="Map" component={MapScreen} />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ tabBarButton: () => null }}
-        />
+        <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarButton: () => null }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
