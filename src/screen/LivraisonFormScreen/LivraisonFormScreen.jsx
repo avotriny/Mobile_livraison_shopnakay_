@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Signature from 'react-native-signature-canvas';
 
-// Validation schema
+// Schéma de validation
 const LivraisonSchema = Yup.object().shape({
   images: Yup.mixed()
     .nullable()
@@ -15,7 +15,7 @@ const LivraisonSchema = Yup.object().shape({
     .test('fileType', 'Format invalide (jpeg/png/jpg)', value => !value || ['image/jpeg', 'image/png', 'image/jpg'].includes(value.type)),
   signature: Yup.string()
     .required('Signature requise')
-    .matches(/^data:(image\/\w+);base64,/, 'Signature invalide'),
+    .matches(/^data:image\/\w+;base64,/, 'Signature invalide'),
 });
 
 export default function LivraisonFormScreen({ route, navigation }) {
@@ -23,28 +23,33 @@ export default function LivraisonFormScreen({ route, navigation }) {
   const [previewImage, setPreviewImage] = useState(null);
   const sigRef = useRef();
 
-  // Image picker
+  // Ouvre la librairie d'images
   const pickImage = async (setFieldValue) => {
-    const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
-    if (result.assets?.length) {
-      const asset = result.assets[0];
-      setPreviewImage(asset.uri);
-      setFieldValue('images', {
-        uri: asset.uri,
-        name: asset.fileName,
-        type: asset.type,
-        fileSize: asset.fileSize,
-      });
+    try {
+      const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
+      if (result?.assets?.length) {
+        const asset = result.assets[0];
+        setPreviewImage(asset.uri);
+        setFieldValue('images', {
+          uri: asset.uri,
+          name: asset.fileName,
+          type: asset.type,
+          fileSize: asset.fileSize,
+        });
+      }
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible de sélectionner l’image');
     }
   };
 
-  // Clear signature pad
-  const resetSignature = () => {
-    sigRef.current.clearSignature();
+  // Réinitialise la signature
+  const resetSignature = (setFieldValue) => {
+    sigRef.current?.clearSignature();
+    setFieldValue('signature', '');
   };
 
-  // Form submit handler
-  const handleSubmitApi = async (values, { setSubmitting }) => {
+  // Envoi du formulaire
+  const submitLivraison = async (values, { setSubmitting }) => {
     const formData = new FormData();
     formData.append('commande_id', String(commande.id));
     if (values.images) {
@@ -82,11 +87,11 @@ export default function LivraisonFormScreen({ route, navigation }) {
       <Formik
         initialValues={{ images: null, signature: '' }}
         validationSchema={LivraisonSchema}
-        onSubmit={handleSubmitApi}
+        onSubmit={submitLivraison}
       >
-        {({ handleSubmit, setFieldValue, values, errors, touched, isSubmitting }) => (
+        {({ handleSubmit, setFieldValue, setFieldTouched, values, errors, touched, isSubmitting }) => (
           <View>
-            {/* Image picker */}
+            {/* Sélecteur d'image */}
             <View style={styles.imagePicker}>
               {previewImage ? (
                 <Image source={{ uri: previewImage }} style={styles.imagePreview} />
@@ -96,30 +101,37 @@ export default function LivraisonFormScreen({ route, navigation }) {
             </View>
             {errors.images && touched.images && <Text style={styles.error}>{errors.images}</Text>}
 
-            {/* Signature pad inline */}
+            {/* Pad de signature inline */}
             <Text style={styles.label}>Signature :</Text>
             <View style={styles.sigWrapper}>
               <Signature
                 ref={sigRef}
-                onOK={sig => setFieldValue('signature', sig)}
-                onEmpty={() => Alert.alert('Veuillez signer ci-dessous')}
+                onOK={(sig) => {
+                  setFieldValue('signature', sig);
+                  setFieldTouched('signature', true);
+                }}
+                onEmpty={() => Alert.alert('Veuillez signer et valider')}
                 descriptionText="Signez ici"
                 clearText="Effacer"
                 confirmText="Valider"
                 webStyle={stylePad}
                 autoClear={false}
-                webViewProps={{ originWhitelist: ['*'], javaScriptEnabled: true }}
-                style={{ flex: 1, height: 200 }}
+                style={{ flex: 1 }}
               />
             </View>
             <View style={styles.signatureButtons}>
-              <Button title="Effacer" onPress={resetSignature} />
+              <Button title="Effacer" onPress={() => resetSignature(setFieldValue)} />
             </View>
             {errors.signature && touched.signature && <Text style={styles.error}>{errors.signature}</Text>}
 
+            {/* Bouton de soumission */}
             <Button
               title={isSubmitting ? 'Envoi...' : 'Valider la livraison'}
-              onPress={handleSubmit}
+              onPress={() => {
+                // Forcer la lecture de la signature si l'utilisateur n'a pas appuyé "Valider" dans le pad
+                sigRef.current?.readSignature();
+                handleSubmit();
+              }}
               disabled={isSubmitting}
             />
           </View>
