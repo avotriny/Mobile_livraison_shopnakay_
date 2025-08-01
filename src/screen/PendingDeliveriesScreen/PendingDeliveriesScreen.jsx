@@ -1,55 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Button } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+  Button
+} from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PendingDeliveriesScreen({ navigation }) {
   const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const res   = await axios.get('http://10.0.2.2:8000/api/livraison', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setOrders(res.data.commandes);
+      if (!token) {
+        throw new Error('Auth token manquant');
+      }
+
+      // ⚠️ Sur émulateur Android : 10.0.2.2, sur appareil réel : votre IP locale
+      const baseURL = 'http://10.0.2.2:8000';
+      const res = await axios.get(
+        `${baseURL}/api/livraison`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Si res.data est une string, on la parse en JSON
+      let data = res.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (parseErr) {
+          console.error('Erreur parse JSON:', parseErr);
+          throw new Error('Réponse API mal formée');
+        }
+      }
+
+      console.log('🔍 API response (parsed):', data);
+      if (!Array.isArray(data.commandes)) {
+        console.warn('`data.commandes` n’est pas un tableau :', data.commandes);
+      }
+
+      // Normalisation des coordonnées
+      const normalized = (data.commandes || []).map(o => ({
+        ...o,
+        latitude:  o.latitude  != null ? parseFloat(o.latitude)  : null,
+        longitude: o.longitude != null ? parseFloat(o.longitude) : null,
+      }));
+
+      console.log('➡️ Normalized orders count:', normalized.length);
+      setOrders(normalized);
+
     } catch (err) {
-      Alert.alert('Erreur', err.message);
+      console.error('❌ fetchOrders error:', err, err.response?.data);
+      setError(err.response?.data?.error || err.message);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const renderItem = ({ item }) => {
-    const totalQty = item.lignes.reduce((sum, l) => sum + l.quantite, 0);
-    return (
-      <View style={styles.card}>
-        <TouchableOpacity
-          style={styles.cardContent}
-          onPress={() => navigation.navigate('OrderDetail', { id: item.id })}
-        >
-          <Text style={styles.title}>Commande #{item.id}</Text>
-          <Text style={styles.line}>Client : {item.nom}</Text>
-          <Text style={styles.line}>Qté totale : {totalQty}</Text>
-          <Text style={styles.line}>Total : {item.prix_total} Ar</Text>
-          <Text style={styles.line}>Adresse : {item.adresse}</Text>
-          <Text style={[styles.line, styles.status]}>{item.status}</Text>
-        </TouchableOpacity>
-
-        {item.status !== 'livré' && (
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Faire la livraison"
-              onPress={() => navigation.navigate('LivraisonForm', { commande: item })}
-            />
-          </View>
-        )}
-      </View>
-    );
   };
 
   if (loading) {
@@ -60,59 +79,64 @@ export default function PendingDeliveriesScreen({ navigation }) {
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Erreur : {error}</Text>
+        <Button title="Réessayer" onPress={fetchOrders} />
+      </View>
+    );
+  }
+
+  const renderItem = ({ item }) => {
+    const hasCoords = item.latitude != null && item.longitude != null;
+    return (
+      <View style={styles.card}>
+        <Text style={styles.title}>Commande #{item.id}</Text>
+        <Text>Client : {item.nom}</Text>
+        <Text>Total : {item.prix_total} Ar</Text>
+        <Text>Adresse : {item.adresse}</Text>
+
+        <Button
+          title={hasCoords ? "Voir sur la carte" : "Pas de coords"}
+          onPress={() => navigation.navigate('Map', { commande: item })}
+          disabled={!hasCoords}
+        />
+
+        {!hasCoords && (
+          <Text style={styles.noCoordsText}>
+            Coordonnées non disponibles
+          </Text>
+        )}
+      </View>
+    );
+  };
+
   return (
     <FlatList
       data={orders}
       keyExtractor={o => o.id.toString()}
       renderItem={renderItem}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      ListEmptyComponent={<Text style={styles.emptyText}>Aucune commande disponible.</Text>}
-      contentContainerStyle={orders.length === 0 && { flex: 1, justifyContent: 'center' }}
-      style={styles.container}
+      contentContainerStyle={
+        orders.length === 0
+          ? { flex:1, justifyContent:'center', alignItems:'center' }
+          : undefined
+      }
+      ListEmptyComponent={
+        <Text style={styles.emptyText}>
+          Aucune livraison à afficher.
+        </Text>
+      }
     />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  loader:    { flex:1, justifyContent:'center', alignItems:'center' },
-
-  card: {
-    backgroundColor: '#fff',
-    marginHorizontal: 12,
-    marginVertical: 6,
-    borderRadius: 8,
-    padding: 12,
-    elevation: 2,
-  },
-  cardContent: {
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  line: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 2,
-  },
-  status: {
-    color: '#e67e22',
-    fontWeight: '500',
-  },
-  buttonContainer: {
-    alignSelf: 'flex-end',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginHorizontal: 12,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-  },
+  loader:        { flex:1, justifyContent:'center', alignItems:'center' },
+  center:        { flex:1, justifyContent:'center', alignItems:'center', padding:16 },
+  card:          { backgroundColor:'#fff', margin:8, padding:12, borderRadius:8, elevation:2 },
+  title:         { fontSize:16, fontWeight:'600', marginBottom:4 },
+  noCoordsText:  { color:'#888', fontStyle:'italic', marginTop:6 },
+  emptyText:     { textAlign:'center', color:'#888', fontSize:16 },
+  errorText:     { color:'red', fontSize:16, marginBottom:12, textAlign:'center' },
 });
