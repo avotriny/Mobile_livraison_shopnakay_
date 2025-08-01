@@ -1,5 +1,14 @@
+// LivraisonFormScreen.js
 import React, { useState, useRef } from 'react';
-import { View, Text, Button, Image, StyleSheet, Alert, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Button,
+  Image,
+  StyleSheet,
+  Alert,
+  ScrollView
+} from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -45,7 +54,6 @@ export default function LivraisonFormScreen({ route, navigation }) {
     setFieldValue('signature', '');
   };
 
-
   const submitLivraison = async (values, { setSubmitting }) => {
     const formData = new FormData();
     formData.append('commande_id', String(commande.id));
@@ -70,7 +78,8 @@ export default function LivraisonFormScreen({ route, navigation }) {
         }
       );
       Alert.alert('Succès', 'Livraison enregistrée');
-      navigation.goBack();
+      // Retourner directement à la liste des livraisons en attente
+      navigation.popToTop();
     } catch (error) {
       Alert.alert('Erreur', error.response?.data?.error || error.message);
     } finally {
@@ -96,7 +105,6 @@ export default function LivraisonFormScreen({ route, navigation }) {
               )}
             </View>
             {errors.images && touched.images && <Text style={styles.error}>{errors.images}</Text>}
-
 
             <Text style={styles.label}>Signature :</Text>
             <View style={styles.sigWrapper}>
